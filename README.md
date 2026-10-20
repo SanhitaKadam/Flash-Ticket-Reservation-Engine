@@ -1,3 +1,4 @@
+
 # Flash Ticket Reservation Engine
 
 High-concurrency ticket reservation system, built incrementally.
@@ -40,3 +41,7 @@ High-concurrency ticket reservation system, built incrementally.
 
 ## Double-booking protection
 `SELECT ... FOR UPDATE` row locks inside one transaction, plus a unique constraint on `booking_seats.seat_id` as a final safety net.
+
+# Flash-Ticket-Reservation-Engine
+A high-concurrency ticket booking system built with Java 21, Spring Boot 3, Redis, Kafka, and PostgreSQL, featuring atomic seat reservations, overbooking prevention, idempotent processing, and resilient, scalable microservices.
+
