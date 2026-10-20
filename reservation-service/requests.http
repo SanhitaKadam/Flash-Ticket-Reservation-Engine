@@ -1,0 +1,28 @@
+@base = http://localhost:8080
+
+### List events
+GET {{base}}/api/events
+
+### One event
+GET {{base}}/api/events/1
+
+### Seats for event 1
+GET {{base}}/api/events/1/seats
+
+### Book seats 1 and 2 (should succeed: 201)
+POST {{base}}/api/bookings
+Content-Type: application/json
+
+{ "userId": 1, "eventId": 1, "seatIds": [1, 2] }
+
+### Book seat 1 again (should fail: 409 Conflict)
+POST {{base}}/api/bookings
+Content-Type: application/json
+
+{ "userId": 1, "eventId": 1, "seatIds": [1] }
+
+### Get booking 1
+GET {{base}}/api/bookings/1
+
+### Unknown event (should be 404)
+GET {{base}}/api/events/999
