@@ -26,3 +26,6 @@ GET {{base}}/api/bookings/1
 
 ### Unknown event (should be 404)
 GET {{base}}/api/events/999
+
+### My bookings (Phase 2)
+GET {{base}}/api/bookings?userId=1

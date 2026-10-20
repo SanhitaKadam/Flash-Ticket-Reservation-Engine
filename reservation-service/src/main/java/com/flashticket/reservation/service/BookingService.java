@@ -62,9 +62,16 @@ public class BookingService {
                 .orElseThrow(() -> new NotFoundException("Booking " + id + " not found")));
     }
 
+    // Phase 2
+    @Transactional(readOnly = true)
+    public List<BookingResponse> listForUser(Long userId) {
+        return bookings.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(this::toResponse).toList();
+    }
+
     private BookingResponse toResponse(Booking b) {
         return new BookingResponse(b.getId(), b.getUser().getId(), b.getEvent().getId(),
-                b.getStatus(), b.getTotalAmount(),
+                b.getEvent().getName(), b.getStatus(), b.getTotalAmount(),
                 b.getSeats().stream().map(Seat::label).toList(), b.getCreatedAt());
     }
 }

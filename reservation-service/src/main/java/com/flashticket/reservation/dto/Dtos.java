@@ -20,6 +20,8 @@ public final class Dtos {
                                  @NotNull Long eventId,
                                  @NotEmpty List<Long> seatIds) {}
 
-    public record BookingResponse(Long id, Long userId, Long eventId, String status,
-                                  BigDecimal totalAmount, List<String> seats, Instant createdAt) {}
+    // Phase 2: added eventName so the UI can show it without a second request
+    public record BookingResponse(Long id, Long userId, Long eventId, String eventName,
+                                  String status, BigDecimal totalAmount,
+                                  List<String> seats, Instant createdAt) {}
 }

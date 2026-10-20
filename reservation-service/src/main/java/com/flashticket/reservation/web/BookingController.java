@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/bookings")
 public class BookingController {
@@ -23,4 +25,10 @@ public class BookingController {
 
     @GetMapping("/{id}")
     public BookingResponse get(@PathVariable Long id) { return service.get(id); }
+
+    // Phase 2: GET /api/bookings?userId=1
+    @GetMapping
+    public List<BookingResponse> list(@RequestParam Long userId) {
+        return service.listForUser(userId);
+    }
 }

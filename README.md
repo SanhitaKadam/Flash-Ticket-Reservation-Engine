@@ -1,34 +1,36 @@
-
 # Flash Ticket Reservation Engine
 
 High-concurrency ticket reservation system, built incrementally.
 
 ## Status
-- [x] Phase 1: Spring Boot + PostgreSQL basic booking (this zip)
-- [ ] Phase 2: Frontend
+- [x] Phase 1: Spring Boot + PostgreSQL basic booking API
+- [x] Phase 2: React frontend (Vite)
 - [ ] Phase 3+: Redis, idempotency, Kafka, ledger service, gateway, Docker, Kubernetes, k6
 
-## Phase 1 setup (Windows / PowerShell)
+## Run (Windows / PowerShell), two terminals
 
-1. Create the database (use the full path if psql is not on PATH):
+**Terminal 1: backend**
 
-       & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -h localhost
+    $env:DB_USERNAME = "flash_app"
+    $env:DB_PASSWORD = "your_password"
+    cd reservation-service
+    mvn spring-boot:run
 
-       CREATE USER flash_app WITH PASSWORD 'CHOOSE_A_PASSWORD';
-       CREATE DATABASE flashticket OWNER flash_app;
-       \q
+**Terminal 2: frontend**
 
-2. Set credentials as environment variables (never commit them):
+    cd frontend
+    npm install
+    npm run dev
 
-       $env:DB_USERNAME = "flash_app"
-       $env:DB_PASSWORD = "your_password"
+Open http://localhost:5173
 
-3. Run:
+## Database setup (once)
 
-       cd reservation-service
-       mvn spring-boot:run
+    & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -h localhost
 
-4. Test with `reservation-service/requests.http` (VS Code REST Client extension).
+    CREATE USER flash_app WITH PASSWORD 'CHOOSE_A_PASSWORD';
+    CREATE DATABASE flashticket OWNER flash_app;
+    \q
 
 ## API
 | Method | Path | Description |
@@ -38,10 +40,7 @@ High-concurrency ticket reservation system, built incrementally.
 | GET | /api/events/{id}/seats | Seat map with status |
 | POST | /api/bookings | Book seats `{userId, eventId, seatIds[]}` |
 | GET | /api/bookings/{id} | Booking details |
+| GET | /api/bookings?userId= | A user's bookings (Phase 2) |
 
 ## Double-booking protection
 `SELECT ... FOR UPDATE` row locks inside one transaction, plus a unique constraint on `booking_seats.seat_id` as a final safety net.
-
-# Flash-Ticket-Reservation-Engine
-A high-concurrency ticket booking system built with Java 21, Spring Boot 3, Redis, Kafka, and PostgreSQL, featuring atomic seat reservations, overbooking prevention, idempotent processing, and resilient, scalable microservices.
-
