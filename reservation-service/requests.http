@@ -3,29 +3,36 @@
 ### List events
 GET {{base}}/api/events
 
-### One event
-GET {{base}}/api/events/1
-
-### Seats for event 1
+### Seat map (AVAILABLE / HELD / BOOKED)
 GET {{base}}/api/events/1/seats
 
-### Book seats 1 and 2 (should succeed: 201)
+### 1. Hold seat 5 for 10 minutes (expect 201)
+# @name hold
+POST {{base}}/api/reservations
+Content-Type: application/json
+
+{ "userId": 1, "eventId": 1, "seatIds": [5] }
+
+### 2. Try to hold the same seat again (expect 409 "currently held")
+POST {{base}}/api/reservations
+Content-Type: application/json
+
+{ "userId": 1, "eventId": 1, "seatIds": [5] }
+
+### 3. Look at the hold (expect 200 with secondsRemaining)
+GET {{base}}/api/reservations/{{hold.response.body.id}}?userId=1
+
+### 4a. Confirm the hold into a booking (expect 201)
 POST {{base}}/api/bookings
 Content-Type: application/json
 
-{ "userId": 1, "eventId": 1, "seatIds": [1, 2] }
+{ "reservationId": "{{hold.response.body.id}}", "userId": 1 }
 
-### Book seat 1 again (should fail: 409 Conflict)
-POST {{base}}/api/bookings
-Content-Type: application/json
+### 4b. ...or cancel instead (expect 204)
+DELETE {{base}}/api/reservations/{{hold.response.body.id}}?userId=1
 
-{ "userId": 1, "eventId": 1, "seatIds": [1] }
-
-### Get booking 1
-GET {{base}}/api/bookings/1
-
-### Unknown event (should be 404)
-GET {{base}}/api/events/999
-
-### My bookings (Phase 2)
+### My bookings
 GET {{base}}/api/bookings?userId=1
+
+### Unknown event (expect 404)
+GET {{base}}/api/events/999

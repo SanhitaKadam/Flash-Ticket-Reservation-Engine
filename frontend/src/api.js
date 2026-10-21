@@ -14,6 +14,7 @@ async function request(path, options = {}) {
     err.status = res.status
     throw err
   }
+  if (res.status === 204) return null // e.g. DELETE has no body
   return res.json()
 }
 
@@ -21,7 +22,16 @@ export const api = {
   listEvents: () => request('/events'),
   getEvent: (id) => request(`/events/${id}`),
   getSeats: (id) => request(`/events/${id}/seats`),
-  createBooking: (body) => request('/bookings', { method: 'POST', body: JSON.stringify(body) }),
+
+  // Phase 3: step 1, hold seats in Redis
+  createReservation: (body) => request('/reservations', { method: 'POST', body: JSON.stringify(body) }),
+  getReservation: (id, userId) => request(`/reservations/${id}?userId=${userId}`),
+  cancelReservation: (id, userId) => request(`/reservations/${id}?userId=${userId}`, { method: 'DELETE' }),
+
+  // Phase 3: step 2, confirm the hold into a permanent booking
+  confirmReservation: (reservationId, userId) =>
+    request('/bookings', { method: 'POST', body: JSON.stringify({ reservationId, userId }) }),
+
   getBooking: (id) => request(`/bookings/${id}`),
   listBookings: (userId) => request(`/bookings?userId=${userId}`),
 }

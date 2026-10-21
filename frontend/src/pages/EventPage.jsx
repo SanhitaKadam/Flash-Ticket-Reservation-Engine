@@ -11,23 +11,25 @@ export default function EventPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const event = useFetch(() => api.getEvent(id), [id])
-  const seats = useFetch(() => api.getSeats(id), [id])
+  // Poll every 5 s so seats held or released by other customers show up live.
+  const seats = useFetch(() => api.getSeats(id), [id], { pollMs: 5000 })
 
   const [selected, setSelected] = useState(new Set())
   const [submitting, setSubmitting] = useState(false)
-  const [bookingError, setBookingError] = useState(null)
+  const [holdError, setHoldError] = useState(null)
 
   if (event.loading || seats.loading) return <Loading label="Loading seats…" />
   if (event.error) return <ErrorBox error={event.error} onRetry={event.reload} />
   if (seats.error) return <ErrorBox error={seats.error} onRetry={seats.reload} />
 
   const byId = new Map(seats.data.map((s) => [s.id, s]))
-  const chosen = [...selected].map((sid) => byId.get(sid)).filter(Boolean)
+  // A seat someone else grabbed since we selected it silently drops out of our selection.
+  const chosen = [...selected].map((sid) => byId.get(sid)).filter((s) => s && s.status === 'AVAILABLE')
   const total = chosen.reduce((sum, s) => sum + Number(s.price), 0)
   const available = seats.data.filter((s) => s.status === 'AVAILABLE').length
 
   function toggle(seat) {
-    setBookingError(null)
+    setHoldError(null)
     setSelected((prev) => {
       const next = new Set(prev)
       next.has(seat.id) ? next.delete(seat.id) : next.add(seat.id)
@@ -35,19 +37,19 @@ export default function EventPage() {
     })
   }
 
-  async function book() {
+  async function holdSeats() {
     setSubmitting(true)
-    setBookingError(null)
+    setHoldError(null)
     try {
-      const booking = await api.createBooking({
+      const r = await api.createReservation({
         userId: DEMO_USER.id,
         eventId: event.data.id,
-        seatIds: [...selected],
+        seatIds: chosen.map((s) => s.id),
       })
-      navigate(`/bookings/${booking.id}`, { state: { justBooked: true } })
+      navigate(`/checkout/${r.id}`)
     } catch (e) {
-      // Typical case: 409, someone else took the seat first. Show it and refresh the map.
-      setBookingError(e.message)
+      // Typical case: 409, someone else got there first. Show it and refresh the map.
+      setHoldError(e.message)
       setSelected(new Set())
       seats.reload()
     } finally {
@@ -76,7 +78,7 @@ export default function EventPage() {
         <aside className="card summary">
           <h2>Your selection</h2>
           {chosen.length === 0 ? (
-            <p className="muted">Pick one or more seats to continue.</p>
+            <p className="muted">Pick up to 6 seats to continue.</p>
           ) : (
             <ul className="summary-list">
               {chosen.map((s) => (
@@ -85,11 +87,15 @@ export default function EventPage() {
             </ul>
           )}
           <div className="total"><span>Total</span><strong>{money(total)}</strong></div>
-          {bookingError && <div className="alert alert-danger">{bookingError}</div>}
-          <button className="btn btn-primary btn-block" disabled={chosen.length === 0 || submitting} onClick={book}>
-            {submitting ? 'Booking…' : `Book ${chosen.length || ''} seat${chosen.length === 1 ? '' : 's'}`}
+          {holdError && <div className="alert alert-danger">{holdError}</div>}
+          <button className="btn btn-primary btn-block"
+                  disabled={chosen.length === 0 || chosen.length > 6 || submitting}
+                  onClick={holdSeats}>
+            {submitting ? 'Holding…' : `Hold ${chosen.length || ''} seat${chosen.length === 1 ? '' : 's'}`}
           </button>
-          <p className="fineprint">Payment is not part of this step. It is added later as a clearly labelled simulation.</p>
+          <p className="fineprint">
+            Holding reserves your seats for a limited time while you check out. Payment is a clearly labelled simulation.
+          </p>
         </aside>
       </div>
     </>

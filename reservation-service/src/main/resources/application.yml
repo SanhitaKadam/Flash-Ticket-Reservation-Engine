@@ -5,13 +5,22 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/flashticket}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      timeout: 2s
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update   # Phase 1 only; replaced by Flyway migrations later
+      ddl-auto: update   # replaced by Flyway migrations later
     properties:
       hibernate:
         format_sql: true
+
+reservation:
+  hold-seconds: ${RESERVATION_HOLD_SECONDS:600}   # 10 minutes; lower it to test expiry
 
 server:
   port: 8080

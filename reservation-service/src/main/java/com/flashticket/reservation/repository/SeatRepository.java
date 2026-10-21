@@ -14,6 +14,9 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 
     List<Seat> findByEventIdOrderByRowLabelAscSeatNumberAsc(Long eventId);
 
+    // Phase 3: seats of one event by id (derived query: event.id = ? and id in (...))
+    List<Seat> findByEventIdAndIdIn(Long eventId, Collection<Long> ids);
+
     // PESSIMISTIC_WRITE => SELECT ... FOR UPDATE. Ordering by id => consistent lock order => no deadlocks.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select s from Seat s where s.id in :ids and s.event.id = :eventId order by s.id")

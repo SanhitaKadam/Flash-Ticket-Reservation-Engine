@@ -1,7 +1,6 @@
 package com.flashticket.reservation.service;
 
 import com.flashticket.reservation.domain.*;
-import com.flashticket.reservation.dto.Dtos.BookingRequest;
 import com.flashticket.reservation.dto.Dtos.BookingResponse;
 import com.flashticket.reservation.exception.ConflictException;
 import com.flashticket.reservation.exception.NotFoundException;
@@ -10,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
@@ -27,14 +27,15 @@ public class BookingService {
         this.seats = seats; this.bookings = bookings;
     }
 
+    /** Phase 3: called by ReservationService.confirm after the Redis hold was verified. */
     @Transactional
-    public BookingResponse create(BookingRequest req) {
-        User user = users.findById(req.userId())
-                .orElseThrow(() -> new NotFoundException("User " + req.userId() + " not found"));
-        Event event = events.findById(req.eventId())
-                .orElseThrow(() -> new NotFoundException("Event " + req.eventId() + " not found"));
+    public BookingResponse createFromSeats(Long userId, Long eventId, Collection<Long> seatIds) {
+        User user = users.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User " + userId + " not found"));
+        Event event = events.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event " + eventId + " not found"));
 
-        var requestedIds = new HashSet<>(req.seatIds());
+        var requestedIds = new HashSet<>(seatIds);
 
         // 1. Lock the seat rows. Other transactions wanting these seats WAIT here.
         List<Seat> locked = seats.lockSeats(requestedIds, event.getId());
@@ -62,7 +63,6 @@ public class BookingService {
                 .orElseThrow(() -> new NotFoundException("Booking " + id + " not found")));
     }
 
-    // Phase 2
     @Transactional(readOnly = true)
     public List<BookingResponse> listForUser(Long userId) {
         return bookings.findByUserIdOrderByCreatedAtDesc(userId).stream()
